@@ -1,31 +1,110 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, type KeyboardEvent } from 'react'
 import './App.css'
 
 const MAX_TASK_LENGTH = 80
+const TASKS_STORAGE_KEY = 'focus.task-tracker.tasks'
+
+type Task = {
+  id: string
+  text: string
+  isImportant: boolean
+}
+
+const isTask = (value: unknown): value is Task => {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+
+  const task = value as Partial<Task>
+
+  return (
+    typeof task.id === 'string' &&
+    task.id.length > 0 &&
+    typeof task.text === 'string' &&
+    task.text.trim().length > 0 &&
+    task.text.length <= MAX_TASK_LENGTH &&
+    typeof task.isImportant === 'boolean'
+  )
+}
+
+const loadTasks = (): Task[] => {
+  try {
+    const storedTasks = localStorage.getItem(TASKS_STORAGE_KEY)
+
+    if (!storedTasks) {
+      return []
+    }
+
+    const parsedTasks: unknown = JSON.parse(storedTasks)
+
+    return Array.isArray(parsedTasks) ? parsedTasks.filter(isTask) : []
+  } catch {
+    return []
+  }
+}
 
 function App() {
   const [taskText, setTaskText] = useState('')
-  const [submittedTask, setSubmittedTask] = useState('')
+  const [tasks, setTasks] = useState<Task[]>(loadTasks)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks))
+    } catch {
+      // The app remains usable if browser storage is unavailable or full.
+    }
+  }, [tasks])
 
   const normalizedTaskText = taskText.trim()
   const canSubmit =
     normalizedTaskText.length > 0 &&
     normalizedTaskText.length <= MAX_TASK_LENGTH
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-
+  const addTask = () => {
     if (!canSubmit) {
       return
     }
 
-    setSubmittedTask(normalizedTaskText)
+    const newTask: Task = {
+      id: crypto.randomUUID(),
+      text: normalizedTaskText,
+      isImportant: false,
+    }
+
+    setTasks((currentTasks) => [...currentTasks, newTask])
     setTaskText('')
+  }
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    addTask()
+  }
+
+  const handleTaskKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      addTask()
+    }
   }
 
   const handleTaskChange = (value: string) => {
     setTaskText(value.slice(0, MAX_TASK_LENGTH))
-    setSubmittedTask('')
+  }
+
+  const handleToggleImportant = (id: string) => {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === id
+          ? { ...task, isImportant: !task.isImportant }
+          : task,
+      ),
+    )
+  }
+
+  const handleDelete = (id: string) => {
+    setTasks((currentTasks) =>
+      currentTasks.filter((task) => task.id !== id),
+    )
   }
 
   return (
@@ -44,93 +123,133 @@ function App() {
 
         <div className="stage-badge">
           <span className="stage-dot" aria-hidden="true" />
-          Task tracker · Этап 01
+          Task tracker · Этап 03
         </div>
       </header>
 
       <section className="task-card" aria-labelledby="page-title">
-        <div className="card-copy">
-          <p className="eyebrow">
-            <span>01</span>
-            Новая задача
-          </p>
+        <div className="task-card-top">
+          <div className="card-copy">
+            <p className="eyebrow">
+              <span>02</span>
+              Список задач
+            </p>
 
-          <h1 id="page-title">
-            Что важно сделать <em>сегодня?</em>
-          </h1>
+            <h1 id="page-title">
+              Что важно сделать <em>сегодня?</em>
+            </h1>
 
-          <p className="intro">
-            Сформулируйте задачу коротко и ясно. Первый шаг к выполненному делу —
-            записать его.
-          </p>
+            <p className="intro">
+              Добавляйте задачи, отмечайте главное и освобождайте список от
+              выполненного.
+            </p>
+          </div>
+
+          <div className="form-panel">
+            <form id="task-form" className="task-form" onSubmit={handleSubmit}>
+              <label htmlFor="task-input">Название задачи</label>
+
+              <div className="input-row">
+                <input
+                  id="task-input"
+                  name="task"
+                  type="text"
+                  value={taskText}
+                  onChange={(event) => handleTaskChange(event.target.value)}
+                  onKeyDown={handleTaskKeyDown}
+                  maxLength={MAX_TASK_LENGTH}
+                  placeholder="Например, закончить презентацию"
+                  autoComplete="off"
+                  aria-describedby="task-hint"
+                />
+
+                <button type="submit" disabled={!canSubmit}>
+                  <span>Добавить</span>
+                  <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M4 10h12M11 5l5 5-5 5" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="form-meta" id="task-hint">
+                <span>
+                  <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12Z" />
+                    <path d="M8 7.2v3.3M8 5.1h.01" />
+                  </svg>
+                  До {MAX_TASK_LENGTH} символов
+                </span>
+                <span className={taskText.length === MAX_TASK_LENGTH ? 'at-limit' : ''}>
+                  {taskText.length} / {MAX_TASK_LENGTH}
+                </span>
+              </div>
+            </form>
+          </div>
         </div>
 
-        <div className="form-panel">
-          <form id="task-form" className="task-form" onSubmit={handleSubmit}>
-            <label htmlFor="task-input">Название задачи</label>
-
-            <div className="input-row">
-              <input
-                id="task-input"
-                name="task"
-                type="text"
-                value={taskText}
-                onChange={(event) => handleTaskChange(event.target.value)}
-                maxLength={MAX_TASK_LENGTH}
-                placeholder="Например, закончить презентацию"
-                autoComplete="off"
-                aria-describedby={
-                  submittedTask ? 'task-hint task-status' : 'task-hint'
-                }
-              />
-
-              <button type="submit" disabled={!canSubmit}>
-                <span>Добавить</span>
-                <svg viewBox="0 0 20 20" aria-hidden="true">
-                  <path d="M4 10h12M11 5l5 5-5 5" />
-                </svg>
-              </button>
+        <section className="tasks-section" aria-labelledby="tasks-title">
+          <div className="tasks-header">
+            <div>
+              <p className="tasks-kicker">В фокусе</p>
+              <h2 id="tasks-title">Ваши задачи</h2>
             </div>
+            <span className="tasks-count" aria-label={`Количество задач: ${tasks.length}`}>
+              {tasks.length.toString().padStart(2, '0')}
+            </span>
+          </div>
 
-            <div className="form-meta" id="task-hint">
-              <span>
-                <svg viewBox="0 0 16 16" aria-hidden="true">
-                  <path d="M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12Z" />
-                  <path d="M8 7.2v3.3M8 5.1h.01" />
-                </svg>
-                До {MAX_TASK_LENGTH} символов
-              </span>
-              <span className={taskText.length === MAX_TASK_LENGTH ? 'at-limit' : ''}>
-                {taskText.length} / {MAX_TASK_LENGTH}
-              </span>
-            </div>
-          </form>
-
-          {submittedTask && (
-            <div
-              id="task-status"
-              className="success-message is-visible"
-              role="status"
-              aria-live="polite"
-            >
-              <span className="success-icon" aria-hidden="true">
-                <svg viewBox="0 0 20 20">
-                  <path d="m5 10 3 3 7-7" />
+          {tasks.length === 0 ? (
+            <div className="empty-state">
+              <span className="empty-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M7 7h10M7 12h7M7 17h4" />
+                  <path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
                 </svg>
               </span>
-              <span>
-                Задача <strong>«{submittedTask}»</strong> принята. Список появится
-                на следующем этапе.
-              </span>
+              <div>
+                <strong>Задач пока нет</strong>
+                <p>Добавьте первую — она появится здесь.</p>
+              </div>
             </div>
+          ) : (
+            <ol className="task-list">
+              {tasks.map((task) => (
+                <li
+                  className={`task-item ${task.isImportant ? 'is-important' : ''}`}
+                  key={task.id}
+                >
+                  <span className="task-text">{task.text}</span>
+
+                  <div className="task-actions">
+                    <button
+                      className="important-button"
+                      type="button"
+                      onClick={() => handleToggleImportant(task.id)}
+                      aria-pressed={task.isImportant}
+                    >
+                      <svg viewBox="0 0 20 20" aria-hidden="true">
+                        <path d="M10 2.8 12 7l4.6.7-3.3 3.2.8 4.5-4.1-2.1-4.1 2.1.8-4.5-3.3-3.2L8 7l2-4.2Z" />
+                      </svg>
+                      <span>{task.isImportant ? 'Отменить' : 'Важно'}</span>
+                    </button>
+
+                    <button
+                      className="delete-button"
+                      type="button"
+                      onClick={() => handleDelete(task.id)}
+                      aria-label={`Удалить задачу «${task.text}»`}
+                    >
+                      <svg viewBox="0 0 20 20" aria-hidden="true">
+                        <path d="M4 6h12M8 3h4l1 3H7l1-3ZM6 6l.7 10h6.6L14 6M8.5 9v4M11.5 9v4" />
+                      </svg>
+                      <span>Удалить</span>
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ol>
           )}
-        </div>
-
-        <div className="card-footer" aria-hidden="true">
-          <span>Планируйте.</span>
-          <span>Фокусируйтесь.</span>
-          <span>Выполняйте.</span>
-        </div>
+        </section>
       </section>
 
       <footer className="site-footer">
