@@ -8,23 +8,34 @@ type Task = {
   id: string
   text: string
   isImportant: boolean
+  isCompleted: boolean
 }
 
-const isTask = (value: unknown): value is Task => {
+const parseTask = (value: unknown): Task | null => {
   if (typeof value !== 'object' || value === null) {
-    return false
+    return null
   }
 
   const task = value as Partial<Task>
 
-  return (
-    typeof task.id === 'string' &&
-    task.id.length > 0 &&
-    typeof task.text === 'string' &&
-    task.text.trim().length > 0 &&
-    task.text.length <= MAX_TASK_LENGTH &&
-    typeof task.isImportant === 'boolean'
-  )
+  if (
+    typeof task.id !== 'string' ||
+    task.id.length === 0 ||
+    typeof task.text !== 'string' ||
+    task.text.trim().length === 0 ||
+    task.text.length > MAX_TASK_LENGTH ||
+    typeof task.isImportant !== 'boolean' ||
+    (task.isCompleted !== undefined && typeof task.isCompleted !== 'boolean')
+  ) {
+    return null
+  }
+
+  return {
+    id: task.id,
+    text: task.text,
+    isImportant: task.isImportant,
+    isCompleted: task.isCompleted ?? false,
+  }
 }
 
 const loadTasks = (): Task[] => {
@@ -37,7 +48,13 @@ const loadTasks = (): Task[] => {
 
     const parsedTasks: unknown = JSON.parse(storedTasks)
 
-    return Array.isArray(parsedTasks) ? parsedTasks.filter(isTask) : []
+    if (!Array.isArray(parsedTasks)) {
+      return []
+    }
+
+    return parsedTasks
+      .map(parseTask)
+      .filter((task): task is Task => task !== null)
   } catch {
     return []
   }
@@ -69,6 +86,7 @@ function App() {
       id: crypto.randomUUID(),
       text: normalizedTaskText,
       isImportant: false,
+      isCompleted: false,
     }
 
     setTasks((currentTasks) => [...currentTasks, newTask])
@@ -101,6 +119,16 @@ function App() {
     )
   }
 
+  const handleToggleCompleted = (id: string) => {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === id
+          ? { ...task, isCompleted: !task.isCompleted }
+          : task,
+      ),
+    )
+  }
+
   const handleDelete = (id: string) => {
     setTasks((currentTasks) =>
       currentTasks.filter((task) => task.id !== id),
@@ -123,7 +151,7 @@ function App() {
 
         <div className="stage-badge">
           <span className="stage-dot" aria-hidden="true" />
-          Task tracker · Этап 03
+          Task tracker · Этап 04
         </div>
       </header>
 
@@ -131,8 +159,8 @@ function App() {
         <div className="task-card-top">
           <div className="card-copy">
             <p className="eyebrow">
-              <span>02</span>
-              Список задач
+              <span>04</span>
+              Выполнение задач
             </p>
 
             <h1 id="page-title">
@@ -215,10 +243,42 @@ function App() {
             <ol className="task-list">
               {tasks.map((task) => (
                 <li
-                  className={`task-item ${task.isImportant ? 'is-important' : ''}`}
+                  className={`task-item ${task.isImportant ? 'is-important' : ''} ${task.isCompleted ? 'is-completed' : ''}`}
                   key={task.id}
                 >
-                  <span className="task-text">{task.text}</span>
+                  <label className="completion-control">
+                    <input
+                      type="checkbox"
+                      checked={task.isCompleted}
+                      onChange={() => handleToggleCompleted(task.id)}
+                      aria-label={
+                        task.isCompleted
+                          ? `Вернуть задачу «${task.text}» в работу`
+                          : `Отметить задачу «${task.text}» выполненной`
+                      }
+                    />
+                    <span className="completion-indicator" aria-hidden="true">
+                      <span className="task-number" />
+                      <svg viewBox="0 0 20 20">
+                        <path d="m5 10 3.2 3.2L15.5 6" />
+                      </svg>
+                    </span>
+                  </label>
+
+                  <span className="task-text">
+                    <span
+                      className="task-text-active"
+                      aria-hidden={task.isCompleted}
+                    >
+                      {task.text}
+                    </span>
+                    <span
+                      className="task-text-completed"
+                      aria-hidden={!task.isCompleted}
+                    >
+                      {task.text}
+                    </span>
+                  </span>
 
                   <div className="task-actions">
                     <button

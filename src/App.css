@@ -422,29 +422,112 @@ h1 em {
   align-items: center;
   gap: 20px;
   color: #252a27;
-  background: #f4f3ec;
+  background-color: #f4f3ec;
   border: 1px solid transparent;
   border-radius: 16px;
+  box-shadow: inset 0 0 0 rgba(23, 27, 24, 0);
   counter-increment: task-number;
-  transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
+  transition:
+    background-color 260ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    border-color 260ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    box-shadow 260ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    color 260ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    transform 180ms ease;
 }
 
-.task-item::before {
-  content: counter(task-number, decimal-leading-zero);
+.completion-control {
   position: absolute;
   left: 18px;
   top: 50%;
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.completion-control input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.completion-indicator {
+  position: relative;
   width: 34px;
   height: 34px;
   display: grid;
   place-items: center;
   color: #696d68;
   background: rgba(23, 27, 24, 0.07);
+  border: 1px solid transparent;
   border-radius: 50%;
   font-size: 11px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  transform: translateY(-50%);
+  transition:
+    color 260ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    background-color 260ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    border-color 260ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    box-shadow 260ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    transform 180ms ease;
+}
+
+.task-number {
+  display: grid;
+  place-items: center;
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 180ms ease, transform 260ms cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+.task-number::before {
+  content: counter(task-number, decimal-leading-zero);
+}
+
+.completion-indicator svg {
+  position: absolute;
+  inset: 7px;
+  width: 19px;
+  fill: none;
+  opacity: 0;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+  transform: scale(0.65);
+  transition: opacity 180ms ease, transform 260ms cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+.completion-control:hover .completion-indicator {
+  border-color: rgba(23, 27, 24, 0.18);
+  transform: scale(1.06);
+}
+
+.completion-control input:focus-visible + .completion-indicator {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px rgba(118, 168, 45, 0.26);
+}
+
+.completion-control input:checked + .completion-indicator {
+  color: #fff;
+  background: #3d9b68;
+  border-color: #3d9b68;
+  box-shadow: 0 6px 14px rgba(33, 113, 73, 0.22);
+}
+
+.completion-control input:checked + .completion-indicator .task-number {
+  opacity: 0;
+  transform: scale(0.65);
+}
+
+.completion-control input:checked + .completion-indicator svg {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .task-item:hover {
@@ -453,26 +536,73 @@ h1 em {
 
 .task-item.is-important {
   color: #521a19;
-  background: linear-gradient(100deg, #ffe2dc 0%, #fff2ed 100%);
+  background-color: #ffebe7;
   border-color: rgba(193, 62, 52, 0.36);
-  box-shadow: inset 4px 0 #d64d42;
+  box-shadow: inset 4px 0 0 #d64d42;
 }
 
-.task-item.is-important::before {
+.task-item.is-important .completion-indicator {
   color: #fff;
   background: #d64d42;
 }
 
 .task-text {
+  min-width: 0;
+  display: grid;
   overflow-wrap: anywhere;
   font-size: 15px;
-  font-weight: 600;
   line-height: 1.45;
-  transition: font-weight 180ms ease;
 }
 
-.task-item.is-important .task-text {
+.task-text-active,
+.task-text-completed {
+  grid-area: 1 / 1;
+  overflow-wrap: anywhere;
+  transition: opacity 140ms ease-out;
+  will-change: opacity;
+}
+
+.task-text-active {
+  font-style: normal;
+  font-weight: 600;
+  opacity: 1;
+}
+
+.task-text-completed {
+  font-style: italic;
+  font-weight: 700;
+  opacity: 0;
+}
+
+.task-item.is-important .task-text-active {
   font-weight: 850;
+}
+
+.task-item.is-completed {
+  color: #174c36;
+  background-color: #e5f6eb;
+  border-color: rgba(45, 143, 93, 0.38);
+  box-shadow: inset 4px 0 0 #3d9b68;
+}
+
+.task-item.is-completed .completion-indicator {
+  color: #fff;
+  background: #3d9b68;
+  border-color: #3d9b68;
+}
+
+.task-item.is-completed .task-text-active {
+  opacity: 0;
+}
+
+.task-item.is-completed .task-text-completed {
+  opacity: 1;
+}
+
+.task-item.is-completed .important-button[aria-pressed='true'] {
+  color: #245a42;
+  background: #c5ebd4;
+  border-color: rgba(36, 90, 66, 0.2);
 }
 
 .task-actions {
@@ -630,7 +760,7 @@ h1 em {
     gap: 14px;
   }
 
-  .task-item::before {
+  .completion-control {
     left: 15px;
     top: 18px;
     transform: none;
