@@ -1,0 +1,48 @@
+.task-item { position: relative; min-height: 76px; padding: 15px 16px 15px 70px; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 20px; color: #252a27; background-color: #f4f3ec; border: 1px solid transparent; border-radius: 16px; box-shadow: inset 0 0 0 rgba(23,27,24,0); counter-increment: task-number; transition: background-color 260ms cubic-bezier(.2,.75,.25,1),border-color 260ms cubic-bezier(.2,.75,.25,1),box-shadow 260ms cubic-bezier(.2,.75,.25,1),color 260ms cubic-bezier(.2,.75,.25,1),transform 180ms ease; }
+.completion-control { position: absolute; left: 18px; top: 50%; width: 34px; height: 34px; cursor: pointer; transform: translateY(-50%); }
+.completion-control input { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; opacity: 0; pointer-events: none; }
+.completion-indicator { position: relative; width: 34px; height: 34px; display: grid; place-items: center; color: #696d68; background: rgba(23,27,24,.07); border: 1px solid transparent; border-radius: 50%; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; transition: color 260ms cubic-bezier(.2,.75,.25,1),background-color 260ms cubic-bezier(.2,.75,.25,1),border-color 260ms cubic-bezier(.2,.75,.25,1),box-shadow 260ms cubic-bezier(.2,.75,.25,1),transform 180ms ease; }
+.task-number { display: grid; place-items: center; opacity: 1; transform: scale(1); transition: opacity 180ms ease,transform 260ms cubic-bezier(.2,.75,.25,1); }
+.task-number::before { content: counter(task-number,decimal-leading-zero); }
+.completion-indicator svg { position: absolute; inset: 7px; width: 19px; fill: none; opacity: 0; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.2; transform: scale(.65); transition: opacity 180ms ease,transform 260ms cubic-bezier(.2,.75,.25,1); }
+.completion-control:hover .completion-indicator { border-color: rgba(23,27,24,.18); transform: scale(1.06); }
+.completion-control input:focus-visible + .completion-indicator { outline: 3px solid #fff; outline-offset: 3px; box-shadow: 0 0 0 5px rgba(118,168,45,.26); }
+.completion-control input:checked + .completion-indicator { color: #fff; background: #3d9b68; border-color: #3d9b68; box-shadow: 0 6px 14px rgba(33,113,73,.22); }
+.completion-control input:checked + .completion-indicator .task-number { opacity: 0; transform: scale(.65); }
+.completion-control input:checked + .completion-indicator svg { opacity: 1; transform: scale(1); }
+.task-item:hover { transform: translateY(-1px); }
+.task-item.is-important { color: #521a19; background-color: #ffebe7; border-color: rgba(193,62,52,.36); box-shadow: inset 4px 0 0 #d64d42; }
+.task-item.is-important .completion-indicator { color: #fff; background: #d64d42; }
+.task-text { min-width: 0; display: grid; overflow-wrap: anywhere; font-size: 15px; line-height: 1.45; }
+.task-text-active,.task-text-completed { grid-area: 1 / 1; overflow-wrap: anywhere; transition: opacity 140ms ease-out; will-change: opacity; }
+.task-text-active { font-style: normal; font-weight: 600; opacity: 1; }
+.task-text-completed { font-style: italic; font-weight: 700; opacity: 0; }
+.task-edit-field { position: relative; min-width: 0; }
+.task-edit-field label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.task-edit-field input { width: 100%; height: 42px; padding: 0 52px 0 12px; color: #202522; background: rgba(255,255,255,.88); border: 1px solid rgba(23,27,24,.18); border-radius: 10px; outline: none; font: inherit; font-size: 14px; font-weight: 650; transition: border-color 160ms ease,box-shadow 160ms ease; }
+.task-edit-field input:focus { border-color: #789f3b; box-shadow: 0 0 0 4px rgba(118,168,45,.18); }
+.task-edit-field > span { position: absolute; right: 11px; top: 50%; color: #777b76; font-size: 10px; font-weight: 750; font-variant-numeric: tabular-nums; transform: translateY(-50%); }
+.task-item.is-important .task-text-active { font-weight: 850; }
+.task-item.is-completed { color: #174c36; background-color: #e5f6eb; border-color: rgba(45,143,93,.38); box-shadow: inset 4px 0 0 #3d9b68; }
+.task-item.is-completed .completion-indicator { color: #fff; background: #3d9b68; border-color: #3d9b68; }
+.task-item.is-completed .task-text-active { opacity: 0; }
+.task-item.is-completed .task-text-completed { opacity: 1; }
+.task-item.is-completed .important-button[aria-pressed='true'] { color: #245a42; background: #c5ebd4; border-color: rgba(36,90,66,.2); }
+.task-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.task-actions button { height: 38px; padding: 0 13px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border-radius: 10px; font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; transition: background-color 160ms ease,color 160ms ease,border-color 160ms ease,transform 160ms ease; }
+.task-actions button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.task-actions button:hover { transform: translateY(-1px); }
+.task-actions svg { width: 15px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.6; }
+.important-button,.edit-button,.cancel-button { color: #555a56; background: #fff; border: 1px solid rgba(23,27,24,.12); }
+.edit-button:hover { color: #597a27; border-color: rgba(89,122,39,.35); }
+.save-button { color: #182017; background: var(--lime); border: 1px solid #a8dc58; box-shadow: 0 5px 12px rgba(102,139,47,.16); }
+.save-button:not(:disabled):hover { background: #d7ff98; }
+.task-actions .save-button:disabled { color: #8b8e87; background: #d9dad3; border-color: transparent; box-shadow: none; cursor: not-allowed; transform: none; }
+.cancel-button:hover { color: #333835; background: #f0f0ea; }
+.important-button svg { fill: transparent; }
+.important-button:hover { color: #a5332d; border-color: rgba(165,51,45,.32); }
+.important-button[aria-pressed='true'] { color: #fff; background: #d64d42; border-color: #d64d42; }
+.important-button[aria-pressed='true'] svg { fill: currentColor; }
+.delete-button { color: #777b76; background: transparent; border: 1px solid transparent; }
+.delete-button:hover { color: #a5332d; background: rgba(165,51,45,.08); }
+@media (max-width: 620px) { .task-item { padding: 18px 16px 16px 62px; grid-template-columns: 1fr; gap: 14px; } .completion-control { left: 15px; top: 18px; transform: none; } .task-actions { justify-content: flex-start; } .task-actions button { flex: 1 1 calc(50% - 4px); } }
